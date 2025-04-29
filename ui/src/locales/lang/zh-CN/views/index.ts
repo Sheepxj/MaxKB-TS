@@ -14,6 +14,9 @@ import log from './log'
 import applicationWorkflow from './application-workflow'
 import login from './login'
 import operateLog from './operate-log'
+import models from './models'
+import modelsOverview from "@/locales/lang/zh-CN/views/models-overview";
+
 export default {
   notFound,
   application,
@@ -30,5 +33,7 @@ export default {
   log,
   applicationWorkflow,
   login,
-  operateLog
+  operateLog,
+  models,
+  modelsOverview
 }

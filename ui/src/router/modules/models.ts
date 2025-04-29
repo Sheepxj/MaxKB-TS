@@ -1,65 +1,65 @@
 import Layout from '@/layout/layout-template/DetailLayout.vue'
 import { ComplexPermission } from '@/utils/permission/type'
 
-const applicationRouter = {
-  path: '/application',
-  name: 'application',
-  meta: { title: 'views.application.title', permission: 'APPLICATION:READ' },
-  redirect: '/application',
+const ModelsRouter = {
+  path: '/models',
+  name: 'models',
+  meta: { title: 'views.models.title', permission: 'APPLICATION:READ' },
+  redirect: '/models',
   component: () => import('@/layout/layout-template/AppLayout.vue'),
   children: [
     {
-      path: '/application',
-      name: 'application-index',
-      meta: { title: '应用主页', activeMenu: '/application' },
-      component: () => import('@/views/application/index.vue')
+      path: '/models',
+      name: 'models-index',
+      meta: { title: '本地模型库主页', activeMenu: '/models' },
+      component: () => import('@/views/models/index.vue')
     },
     {
-      path: '/application/:id/:type',
-      name: 'ApplicationDetail',
-      meta: { title: '应用详情', activeMenu: '/application' },
+      path: '/models/:id/:type',
+      name: 'modelsDetail',
+      meta: { title: '模型详情', activeMenu: '/models' },
       component: Layout,
       hidden: true,
       children: [
         {
           path: 'overview',
-          name: 'Overview',
+          name: 'modelsOverview',
           meta: {
             icon: 'app-all-menu',
             iconActive: 'app-all-menu-active',
-            title: 'views.applicationOverview.title',
+            title: 'views.modelsOverview.title',
             active: 'overview',
-            parentPath: '/application/:id/:type',
-            parentName: 'ApplicationDetail'
+            parentPath: '/models/:id/:type',
+            parentName: 'modelsDetail'
           },
-          component: () => import('@/views/application-overview/index.vue')
+          component: () => import('@/views/models-overview/index.vue')
         },
         {
           path: 'setting',
-          name: 'Setting',
+          name: 'modelsSetting',
           meta: {
             icon: 'app-setting',
             iconActive: 'app-setting-active',
             title: 'common.setting',
             active: 'setting',
-            parentPath: '/application/:id/:type',
-            parentName: 'ApplicationDetail'
+            parentPath: '/models/:id/:type',
+            parentName: 'modelsDetail'
           },
-          component: () => import('@/views/application/ApplicationSetting.vue')
+          component: () => import('@/views/models/ApplicationSetting.vue')
         },
         {
           path: 'access',
-          name: 'AppAccess',
+          name: 'modelsAccess',
           meta: {
             icon: 'app-access',
             iconActive: 'app-access-active',
             title: 'views.application.applicationAccess.title',
             active: 'access',
-            parentPath: '/application/:id/:type',
-            parentName: 'ApplicationDetail',
+            parentPath: '/models/:id/:type',
+            parentName: 'modelsDetail',
             permission: new ComplexPermission([], ['x-pack'], 'OR')
           },
-          component: () => import('@/views/application/ApplicationAccess.vue')
+          component: () => import('@/views/models/ApplicationAccess.vue')
         },
         {
           path: 'hit-test',
@@ -68,8 +68,8 @@ const applicationRouter = {
             icon: 'app-hit-test',
             title: 'views.application.hitTest.title',
             active: 'hit-test',
-            parentPath: '/application/:id/:type',
-            parentName: 'ApplicationDetail'
+            parentPath: '/models/:id/:type',
+            parentName: 'modelsDetail'
           },
           component: () => import('@/views/hit-test/index.vue')
         },
@@ -81,8 +81,8 @@ const applicationRouter = {
             iconActive: 'app-document-active',
             title: 'views.log.title',
             active: 'log',
-            parentPath: '/application/:id/:type',
-            parentName: 'ApplicationDetail'
+            parentPath: '/models/:id/:type',
+            parentName: 'modelsDetail'
           },
           component: () => import('@/views/log/index.vue')
         }
@@ -91,4 +91,4 @@ const applicationRouter = {
   ]
 }
 
-export default applicationRouter
+export default ModelsRouter

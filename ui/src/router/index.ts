@@ -19,6 +19,7 @@ const router = createRouter({
 // 路由前置拦截器
 router.beforeEach(
   async (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
+
     NProgress.start()
     if (to.name === '404') {
       next()
@@ -47,6 +48,7 @@ router.beforeEach(
       next()
     } else {
       // 如果没有权限则直接取404页面
+      console.log('没有权限')
       next('404')
     }
   }
