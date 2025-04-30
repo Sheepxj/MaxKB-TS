@@ -185,3 +185,6 @@ data
 poetry.lock
 apps/setting/models_provider/impl/*/icon/
 tmp/
+
+!ui/src/views/models
+!ui/src/views/models/**
