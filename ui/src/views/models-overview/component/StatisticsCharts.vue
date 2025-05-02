@@ -4,8 +4,8 @@
       :xs="12"
       :sm="12"
       :md="12"
-      :lg="6"
-      :xl="6"
+      :lg="8"
+      :xl="8"
       v-for="(item, index) in statisticsType"
       :key="index"
       class="mb-16"
@@ -22,12 +22,14 @@
               <span v-if="item.sum.length > 1" class="ml-12" style="color: #f54a45"
                 >+{{ numberFormat(item.sum?.[1]) }}</span
               >
+              <span v-if="item.id === 'tokensCharts'">KB</span>
             </div>
             <div v-else class="flex align-center mr-8">
-              <AppIcon iconName="app-like-color"></AppIcon>
+              <!-- <AppIcon iconName="app-like-color"></AppIcon> -->
               <h2 class="ml-4">{{ item.sum?.[0] }}</h2>
-              <AppIcon class="ml-12" iconName="app-oppose-color"></AppIcon>
-              <h2 class="ml-4">{{ item.sum?.[1] }}</h2>
+              <span>%</span>
+              <!-- <AppIcon class="ml-12" iconName="app-oppose-color"></AppIcon> -->
+              <!-- <h2 class="ml-4">{{ item.sum?.[1] }}</h2> -->
             </div>
           </div>
         </div>
@@ -45,7 +47,7 @@
       :key="index"
       class="mb-16"
     >
-      <el-card shadow="never">
+      <el-card shadow="never" v-if="index !== 2">
         <div class="p-8">
           <AppCharts height="316px" :id="item.id" type="line" :option="item.option" />
         </div>
@@ -65,43 +67,46 @@ const props = defineProps({
   }
 })
 const statisticsType = computed(() => [
-  {
-    id: 'customerCharts',
-    // @ts-ignore
-    name: t('views.applicationOverview.monitor.charts.customerTotal'),
-    icon: 'app-user',
-    background: '#EBF1FF',
-    color: '#3370FF',
-    sum: [
-      getSum(getAttrsArray(props.data, 'customer_num') || 0),
-      getSum(getAttrsArray(props.data, 'customer_added_count') || 0)
-    ],
-    option: {
-      title: t('views.applicationOverview.monitor.charts.customerTotal'),
-      xData: getAttrsArray(props.data, 'day'),
-      yData: [
-        {
-          name: t('views.applicationOverview.monitor.charts.customerTotal'),
-          type: 'line',
-          area: true,
-          data: getAttrsArray(props.data, 'customer_num')
-        },
-        {
-          name:  t('views.applicationOverview.monitor.charts.customerNew'),
-          type: 'line',
-          area: true,
-          data: getAttrsArray(props.data, 'customer_added_count')
-        }
-      ]
-    }
-  },
-  {
+  // {
+  //   id: 'customerCharts',
+  //   // @ts-ignore
+  //   name: t('views.applicationOverview.monitor.charts.customerTotal'),
+  //   icon: 'app-user',
+  //   background: '#EBF1FF',
+  //   color: '#3370FF',
+  //   sum: [
+  //     getSum(getAttrsArray(props.data, 'customer_num') || 0),
+  //     getSum(getAttrsArray(props.data, 'customer_added_count') || 0)
+  //   ],
+  //   // option: {
+  //   //   title: t('views.applicationOverview.monitor.charts.customerTotal'),
+  //   //   xData: getAttrsArray(props.data, 'day'),
+  //   //   yData: [
+  //   //     {
+  //   //       name: t('views.applicationOverview.monitor.charts.customerTotal'),
+  //   //       type: 'line',
+  //   //       area: true,
+  //   //       data: getAttrsArray(props.data, 'customer_num')
+  //   //     },
+  //   //     {
+  //   //       name:  t('views.applicationOverview.monitor.charts.customerNew'),
+  //   //       type: 'line',
+  //   //       area: true,
+  //   //       data: getAttrsArray(props.data, 'customer_added_count')
+  //   //     }
+  //   //   ]
+  //   // }
+  // },
+  {  // 调用次数
     id: 'chatRecordCharts',
     name:  t('views.applicationOverview.monitor.charts.queryCount'),
     icon: 'app-question',
     background: '#FFF3E5',
     color: '#FF8800',
-    sum: [getSum(getAttrsArray(props.data, 'chat_record_count') || 0)],
+    sum: [
+      // getSum(getAttrsArray(props.data, 'chat_record_count') || 0)
+      1,
+    ],
     option: {
       title: t('views.applicationOverview.monitor.charts.queryCount'),
       xData: getAttrsArray(props.data, 'day'),
@@ -113,33 +118,17 @@ const statisticsType = computed(() => [
       ]
     }
   },
-  {
-    id: 'tokensCharts',
-    name: t('views.applicationOverview.monitor.charts.tokensTotal'),
-    icon: 'app-tokens',
-    background: '#E5FBF8',
-    color: '#00D6B9',
-    sum: [getSum(getAttrsArray(props.data, 'tokens_num') || 0)],
-    option: {
-      title: t('views.applicationOverview.monitor.charts.tokensTotal'),
-      xData: getAttrsArray(props.data, 'day'),
-      yData: [
-        {
-          type: 'line',
-          data: getAttrsArray(props.data, 'tokens_num')
-        }
-      ]
-    }
-  },
-  {
+  
+  {  // 预测准确率
     id: 'starCharts',
     name: t('views.applicationOverview.monitor.charts.userSatisfaction'),
     icon: 'app-user-stars',
     background: '#FEEDEC',
     color: '#F54A45',
     sum: [
-      getSum(getAttrsArray(props.data, 'star_num') || 0),
-      getSum(getAttrsArray(props.data, 'trample_num') || 0)
+      91.5,
+      // getSum(getAttrsArray(props.data, 'star_num') || 0),
+      // getSum(getAttrsArray(props.data, 'trample_num') || 0)
     ],
     option: {
       title: t('views.applicationOverview.monitor.charts.userSatisfaction'),
@@ -150,14 +139,35 @@ const statisticsType = computed(() => [
           type: 'line',
           data: getAttrsArray(props.data, 'star_num')
         },
-        {
-          name: t('views.applicationOverview.monitor.charts.disapproval'),
-          type: 'line',
-          data: getAttrsArray(props.data, 'trample_num')
-        }
+        // {
+        //   name: t('views.applicationOverview.monitor.charts.disapproval'),
+        //   type: 'line',
+        //   data: getAttrsArray(props.data, 'trample_num')
+        // }
       ]
     }
-  }
+  },
+  {  // 参数大小
+    id: 'tokensCharts',
+    name: t('views.applicationOverview.monitor.charts.tokensTotal'),
+    icon: 'app-tokens',
+    background: '#E5FBF8',
+    color: '#00D6B9',
+    sum: [
+      // getSum(getAttrsArray(props.data, 'tokens_num') || 0)
+      97,
+    ],
+    // option: {
+    //   title: t('views.applicationOverview.monitor.charts.tokensTotal'),
+    //   xData: getAttrsArray(props.data, 'day'),
+    //   yData: [
+    //     {
+    //       type: 'line',
+    //       data: getAttrsArray(props.data, 'tokens_num')
+    //     }
+    //   ]
+    // }
+  },
 ])
 </script>
 <style lang="scss" scoped></style>

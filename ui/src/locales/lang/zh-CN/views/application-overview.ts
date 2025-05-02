@@ -1,7 +1,7 @@
 export default {
   title: '概览',
   appInfo: {
-    header: '应用信息',
+    header: '模型信息',
     publicAccessLink: '公开访问链接',
     openText: '开',
     closeText: '关',
@@ -101,12 +101,12 @@ export default {
       other: '自定义'
     },
     charts: {
-      customerTotal: '用户总数',
+      customerTotal: '管理员',
       customerNew: '用户新增数',
-      queryCount: '提问次数',
-      tokensTotal: 'Tokens 总数',
-      userSatisfaction: '用户满意度',
-      approval: '赞同',
+      queryCount: '调用次数',
+      tokensTotal: '参数大小',
+      userSatisfaction: '预测准确率',
+      approval: '准确率',
       disapproval: '反对'
     }
   }
