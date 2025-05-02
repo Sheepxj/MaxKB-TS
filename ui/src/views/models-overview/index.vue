@@ -311,7 +311,7 @@ function changeDayRangeHandle(val: string) {
 
 function getAppStatistics() {
   overviewApi.getStatistics(id, daterange.value, statisticsLoading).then((res: any) => {
-    statisticsData.value = res.data
+    statisticsData.value = res.data    // todo 概览界面的数据来源
   })
 }
 
