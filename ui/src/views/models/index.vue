@@ -312,10 +312,17 @@ function mapToUrlParams(map: any[]) {
 }
 
 function getAccessToken(id: string) {
+  /*
+  该函数用于生成携带特定参数的模型访问令牌链接。当用户点击"演示"按钮时，会动态构造包含以下内容的URL：
+  通过应用ID找到对应的模型配置
+  从模型的workflow配置中提取API输入参数（包括直接定义的API参数或标记为API输入的字段）
+  将参数转换为URL查询字符串
+  拼接基础URL + 访问令牌 + 参数，打开新窗口进行模型演示
+  */
   applicationList.value
-      .filter((app) => app.id === id)[0]
-      ?.work_flow?.nodes?.filter((v: any) => v.id === 'base-node')
-      .map((v: any) => {
+      .filter((app) => app.id === id)[0]  // 1. 根据ID过滤目标应用
+      ?.work_flow?.nodes?.filter((v: any) => v.id === 'base-node') // 2. 访问应用的workflow节点 // 3. 过滤出基础节点
+      .map((v: any) => { // 4. 映射处理节点参数
         apiInputParams.value = v.properties.api_input_field_list
             ? v.properties.api_input_field_list.map((v: any) => {
               return {
@@ -334,12 +341,16 @@ function getAccessToken(id: string) {
                     })
                 : []
       })
-
-  const apiParams = mapToUrlParams(apiInputParams.value)
+  console.log(apiInputParams)
+  // 生成带参数的访问链接
+  const apiParams = mapToUrlParams(apiInputParams.value) // mapToUrlParams 是一个辅助函数，假设它将参数数组转换为 URL 查询字符串
       ? '?' + mapToUrlParams(apiInputParams.value)
       : ''
+  console.log(apiParams)
   application.asyncGetAccessToken(id, loading).then((res: any) => {
-    window.open(application.location + res?.data?.access_token + apiParams)
+    // 新增自定义路径逻辑，只在models的index.vue中实现
+    const customBaseUrl = `${window.location.origin}/ui/chat_south/`
+    window.open(customBaseUrl + res?.data?.access_token + apiParams)
   })
 }
 

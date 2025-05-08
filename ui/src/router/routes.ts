@@ -25,6 +25,12 @@ export const routes: Array<RouteRecordRaw> = [
     name: 'Chat',
     component: () => import('@/views/chat/index.vue')
   },
+  // 新增 chat_south 路由配置
+  {
+    path: '/chat_south/:accessToken',  // ← 新增路由路径
+    name: 'ChatSouth',
+    component: () => import('@/views/chat_south/index.vue')  // ← 对应新组件路径
+  },
 
   {
     path: '/login',

@@ -188,3 +188,8 @@ tmp/
 
 !ui/src/views/models
 !ui/src/views/models/**
+
+./data/cache/
+
+data/cache
+
