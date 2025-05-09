@@ -176,7 +176,7 @@ cython_debug/
 #ui/package-lock.json
 ui/node_modules
 ui/dist
-#apps/static
+apps/static
 models/
 #apps/xpack
 #!apps/**/models/
@@ -188,3 +188,4 @@ tmp/
 
 !ui/src/views/models
 !ui/src/views/models/**
+data
