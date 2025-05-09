@@ -5,6 +5,7 @@ import views from './views'
 import common from './common'
 import dynamicsForm from './dynamics-form'
 import chat from './ai-chat'
+import timeSeries from './time-series'
 export default {
   lang: '简体中文',
   layout,
@@ -13,5 +14,6 @@ export default {
   zhCn,
   common,
   dynamicsForm,
-  chat
+  chat,
+  timeSeries
 }

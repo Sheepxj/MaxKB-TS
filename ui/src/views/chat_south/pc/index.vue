@@ -38,7 +38,7 @@
               <el-icon>
                 <Plus />
               </el-icon>
-              <span class="ml-4">{{ $t('chat.createChat') }}</span>
+              <span class="ml-4">{{ $t('timeSeries.createChat') }}</span>
             </el-button>
             <p class="mt-20 mb-8">{{ $t('chat.history') }}</p>
           </div>
@@ -101,52 +101,53 @@
         </div>
         <div class="chat-pc__right">
           <div class="right-header border-b mb-24 p-16-24 flex-between">
-            <h4 class="ellipsis-1" style="width: 66%">
-              {{ currentChatName }}
-            </h4>
-
-            <span class="flex align-center" v-if="currentRecordList.length">
-              <AppIcon
-                v-if="paginationConfig.total"
-                iconName="app-chat-record"
-                class="info mr-8"
-                style="font-size: 16px"
-              ></AppIcon>
-              <span v-if="paginationConfig.total" class="lighter">
-                {{ paginationConfig.total }} {{ $t('chat.question_count') }}
-              </span>
-              <el-dropdown class="ml-8">
-                <AppIcon
-                  iconName="app-export"
-                  class="cursor"
-                  :title="$t('chat.exportRecords')"
-                ></AppIcon>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="exportMarkdown"
-                      >{{ $t('common.export') }} Markdown</el-dropdown-item
-                    >
-                    <el-dropdown-item @click="exportHTML"
-                      >{{ $t('common.export') }} HTML</el-dropdown-item
-                    >
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </span>
+            <el-row :gutter="20" class="w-full">
+              <el-col :span="8">
+                <el-upload
+                  action="#"
+                  :show-file-list="false"
+                  :before-upload="handleUpload"
+                  accept=".csv,.xlsx,.txt"
+                >
+                  <el-button type="primary" plain>
+                    <el-icon><Upload /></el-icon>
+                    {{ $t('timeSeries.uploadData') }}
+                  </el-button>
+                </el-upload>
+              </el-col>
+              
+              <el-col :span="10">
+                <el-select 
+                  v-model="selectedModel"
+                  :placeholder="$t('timeSeries.selectModel')"
+                  class="w-full"
+                  @change="modelChange"
+                >
+                  <el-option
+                    v-for="item in modelOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-col>
+              
+              <el-col :span="6">
+                <el-button 
+                  type="primary" 
+                  @click="startPrediction"
+                  :disabled="!selectedModel"
+                >
+                  <el-icon><VideoPlay /></el-icon>
+                  {{ $t('timeSeries.startPrediction') }}
+                </el-button>
+              </el-col>
+            </el-row>
           </div>
-          <div class="right-height chat-width">
-            <AiChat
-              ref="AiChatRef"
-              v-model:applicationDetails="applicationDetail"
-              :available="applicationAvailable"
-              type="ai-chat"
-              :appId="applicationDetail?.id"
-              :record="currentRecordList"
-              :chatId="currentChatId"
-              @refresh="refresh"
-              @scroll="handleScroll"
-            >
-            </AiChat>
+          
+          <!-- 时间序列展示区域 -->
+          <div class="right-height chart-container">
+            <div ref="chartRef" style="width: 100%; height: 100%"></div>
           </div>
         </div>
       </div>
@@ -195,7 +196,7 @@ const classObj = computed(() => {
 
 const newObj = {
   id: 'new',
-  abstract: t('chat.createChat')
+  abstract: t('timeSeries.createChat')
 }
 const props = defineProps<{
   application_profile: any
@@ -222,7 +223,7 @@ const paginationConfig = ref({
 
 const currentRecordList = ref<any>([])
 const currentChatId = ref('new') // 当前历史记录Id 默认为'new'
-const currentChatName = ref(t('chat.createChat'))
+const currentChatName = ref(t('timeSeries.createChat'))
 const mouseId = ref('')
 
 function mouseenter(row: any) {
@@ -242,7 +243,7 @@ function deleteLog(row: any) {
   log.asyncDelChatClientLog(applicationDetail.value.id, row.id, left_loading).then(() => {
     if (currentChatId.value === row.id) {
       currentChatId.value = 'new'
-      currentChatName.value = t('chat.createChat')
+      currentChatName.value = t('timeSeries.createChat')
       paginationConfig.value.current_page = 1
       paginationConfig.value.total = 0
       currentRecordList.value = []
@@ -277,7 +278,7 @@ function newChat() {
     currentRecordList.value = []
   }
   currentChatId.value = 'new'
-  currentChatName.value = t('chat.createChat')
+  currentChatName.value = t('timeSeries.createChat')
   if (common.isMobile()) {
     isCollapse.value = false
   }
@@ -298,7 +299,7 @@ function getChatLog(id: string, refresh?: boolean) {
       paginationConfig.value.total = 0
       currentRecordList.value = []
       currentChatId.value = chatLogData.value?.[0]?.id || 'new'
-      currentChatName.value = chatLogData.value?.[0]?.abstract || t('chat.createChat')
+      currentChatName.value = chatLogData.value?.[0]?.abstract || t('timeSeries.createChat')
       if (currentChatId.value !== 'new') {
         getChatRecord()
       }
