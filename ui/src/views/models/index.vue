@@ -29,7 +29,7 @@
     </div>
     <div v-loading.fullscreen.lock="paginationConfig.current_page === 1 && loading">
       <InfiniteScroll
-          :size="applicationList.length"
+          :size="modelList.length"
           :total="paginationConfig.total"
           :page_size="paginationConfig.page_size"
           v-model:current_page="paginationConfig.current_page"
@@ -52,7 +52,7 @@
                   :auto-upload="false"
                   :show-file-list="false"
                   :limit="1"
-                  :on-change="(file: any, fileList: any) => importApplication(file)"
+                  :on-change="(file: any, fileList: any) => importModel(file)"
                   class="card-add-button"
               >
                 <div class="flex align-center cursor p-8">
@@ -68,7 +68,7 @@
               :md="8"
               :lg="6"
               :xl="6"
-              v-for="(item, index) in applicationList"
+              v-for="(item, index) in modelList"
               :key="index"
               class="mb-16"
           >
@@ -76,7 +76,7 @@
                 :title="item.name"
                 :description="item.desc"
                 class="application-card cursor"
-                @click="router.push({ path: `/models/${item.id}/${item.type}/overview` })"
+                @click="router.push({ path: `/models/${item.id}/overview` })"
             >
               <template #icon>
                 <AppAvatar
@@ -105,57 +105,61 @@
                 </el-text>
               </template>
               <div class="status-tag">
-                <el-tag :type="getTagType(item.model_type)" class="blue-tag" style="height: 22px">
-<!--                  {{ $t('views.models.simple') }}-->
-                  {{"预测模型"}}
+                <el-tag :type="getModelTypeTag(item.model_type)" :class="getModelTypeClass(item.model_type)" style="height: 22px">
+                  {{ getModelTypeLabel(item.model_type) }}
                 </el-tag>
               </div>
 
               <template #footer>
                 <div class="footer-content">
-                  <el-tooltip
-                      effect="dark"
-                      :content="$t('views.models.setting.demo')"
-                      placement="top"
-                  >
-                    <el-button text @click.stop @click="getAccessToken(item.id)">
-                      <AppIcon iconName="app-view"></AppIcon>
-                    </el-button>
-                  </el-tooltip>
-                  <el-divider direction="vertical"/>
-                  <el-tooltip effect="dark" :content="$t('common.setting')" placement="top">
-                    <el-button text @click.stop="settingApplication(item)">
-                      <AppIcon iconName="Setting"></AppIcon>
-                    </el-button>
-                  </el-tooltip>
-                  <el-divider direction="vertical"/>
-                  <span @click.stop>
-                    <el-dropdown trigger="click">
-                      <el-button text @click.stop>
-                        <el-icon><MoreFilled/></el-icon>
+                  <div class="footer-left">
+                    <el-tooltip
+                        effect="dark"
+                        :content="$t('views.models.setting.demo')"
+                        placement="top"
+                    >
+                      <el-button text @click.stop="viewModelDemo(item)">
+                        <AppIcon iconName="app-view"></AppIcon>
                       </el-button>
-                      <template #dropdown>
-                        <el-dropdown-menu>
-                          <el-dropdown-item
-                              v-if="is_show_copy_button(item)"
-                              @click="copyApplication(item)"
-                          >
-                            <AppIcon iconName="app-copy"></AppIcon>
-                            {{ $t('common.copy') }}
-                          </el-dropdown-item>
-                          <el-dropdown-item @click.stop="exportApplication(item)">
-                            <AppIcon iconName="app-export"></AppIcon>
-
-                            {{ $t('common.export') }}
-                          </el-dropdown-item>
-                          <el-dropdown-item icon="Delete" @click.stop="deleteApplication(item)">{{
-                              $t('common.delete')
-                            }}</el-dropdown-item>
-                        </el-dropdown-menu>
-                      </template>
-                    </el-dropdown>
-                  </span>
-
+                    </el-tooltip>
+                    <el-divider direction="vertical"/>
+                    <el-tooltip effect="dark" :content="$t('common.setting')" placement="top">
+                      <el-button text @click.stop="settingModel(item)">
+                        <AppIcon iconName="Setting"></AppIcon>
+                      </el-button>
+                    </el-tooltip>
+                    <el-divider direction="vertical"/>
+                    <span @click.stop>
+                      <el-dropdown trigger="click">
+                        <el-button text @click.stop>
+                          <el-icon><MoreFilled/></el-icon>
+                        </el-button>
+                        <template #dropdown>
+                          <el-dropdown-menu>
+                            <el-dropdown-item
+                                v-if="is_show_copy_button(item)"
+                                @click="copyModel(item)"
+                            >
+                              <AppIcon iconName="app-copy"></AppIcon>
+                              {{ $t('common.copy') }}
+                            </el-dropdown-item>
+                            <el-dropdown-item @click.stop="exportModel(item)">
+                              <AppIcon iconName="app-export"></AppIcon>
+                              {{ $t('common.export') }}
+                            </el-dropdown-item>
+                            <el-dropdown-item icon="Delete" @click.stop="deleteModel(item)">{{
+                                $t('common.delete')
+                              }}</el-dropdown-item>
+                          </el-dropdown-menu>
+                        </template>
+                      </el-dropdown>
+                    </span>
+                  </div>
+                  <div class="footer-right">
+                    <el-tag v-if="item.base_model" type="info" class="gold-tag" style="height: 22px">
+                      {{ getBaseModelLabel(item.base_model) }}
+                    </el-tag>
+                  </div>
                 </div>
               </template>
             </CardBox>
@@ -163,32 +167,31 @@
         </el-row>
       </InfiniteScroll>
     </div>
-    <CreateApplicationDialog ref="CreateApplicationDialogRef"/>
-    <CopyApplicationDialog ref="CopyApplicationDialogRef"/>
+    <CreateModelDialog ref="CreateModelDialogRef" @refresh="getList"/>
+    <CopyModelDialog ref="CopyModelDialogRef" @refresh="getList"/>
   </div>
 </template>
+
 <script setup lang="ts">
-import {ref, onMounted, reactive} from 'vue'
-import applicationApi from '@/api/application'
-import CreateApplicationDialog from './component/CreateApplicationDialog.vue'
-import CopyApplicationDialog from './component/CopyApplicationDialog.vue'
-import {MsgSuccess, MsgConfirm, MsgAlert, MsgError} from '@/utils/message'
-import {isAppIcon} from '@/utils/application'
-import {useRouter} from 'vue-router'
-import {isWorkFlow} from '@/utils/application'
-import {ValidType, ValidCount} from '@/enums/common'
-import {t} from '@/locales'
+import { ref, onMounted, reactive } from 'vue'
+import modelApi from '@/api/model'
+import CreateModelDialog from './component/CreateModelDialog.vue'
+import CopyModelDialog from './component/CopyModelDialog.vue'
+import { MsgSuccess, MsgConfirm, MsgAlert, MsgError } from '@/utils/message'
+import { isAppIcon } from '@/utils/application'
+import { useRouter } from 'vue-router'
+import { t } from '@/locales'
 import useStore from '@/stores'
 
 const elUploadRef = ref<any>()
-const {application, user, common} = useStore()
+const { model, user, common } = useStore()
 const router = useRouter()
 
-const CopyApplicationDialogRef = ref()
-const CreateApplicationDialogRef = ref()
+const CopyModelDialogRef = ref()
+const CreateModelDialogRef = ref()
 const loading = ref(false)
 
-const applicationList = ref<any[]>([])
+const modelList = ref<any[]>([])
 
 const paginationConfig = reactive({
   current_page: 1,
@@ -196,16 +199,42 @@ const paginationConfig = reactive({
   total: 0
 })
 
-function getTagType(modelType: any) {
+function getModelTypeTag(modelType: string) {
   switch (modelType) {
-    case 'forcasting':
-      return 'success';
-    case 'classification':
-      return 'info';
+    case 'forecasting':
+      return 'primary'
     case 'anomaly_detection':
-      return 'warning';
+      return 'danger'
     case 'imputation':
-      return 'danger';
+      return 'success'
+    default:
+      return 'info'
+  }
+}
+
+function getModelTypeLabel(modelType: string) {
+  switch (modelType) {
+    case 'forecasting':
+      return t('views.models.modelTypes.forecasting')
+    case 'anomaly_detection':
+      return t('views.models.modelTypes.anomalyDetection')
+    case 'imputation':
+      return t('views.models.modelTypes.imputation')
+    default:
+      return modelType
+  }
+}
+
+function getModelTypeClass(modelType: string) {
+  switch (modelType) {
+    case 'forecasting':
+      return 'forecasting-tag'
+    case 'anomaly_detection':
+      return 'anomaly-tag'
+    case 'imputation':
+      return 'imputation-tag'
+    default:
+      return ''
   }
 }
 
@@ -220,12 +249,10 @@ const selectUserId = ref('all')
 
 const searchValue = ref('')
 
-const apiInputParams = ref([])
-
-function copyApplication(row: any) {
-  application.asyncGetApplicationDetail(row.id, loading).then((res: any) => {
+function copyModel(row: any) {
+  model.asyncGetModel(row.id, loading).then((res: any) => {
     if (res?.data) {
-      CopyApplicationDialogRef.value.open({...res.data, model_id: res.data.model})
+      CopyModelDialogRef.value.open({...res.data})
     }
   })
 }
@@ -234,29 +261,26 @@ const is_show_copy_button = (row: any) => {
   return user.userInfo ? user.userInfo.id == row.user_id : false
 }
 
-function settingApplication(row: any) {
-  if (isWorkFlow(row.type)) {
-    router.push({path: `/application/${row.id}/workflow`})
-  } else {
-    router.push({path: `/application/${row.id}/${row.type}/setting`})
-  }
+function settingModel(row: any) {
+  router.push({path: `/models/${row.id}/setting`})
 }
 
-const exportApplication = (application: any) => {
-  applicationApi.exportApplication(application.id, application.name, loading).catch((e) => {
+const exportModel = (model: any) => {
+  modelApi.exportModel(model.id, model.name, loading).catch((e) => {
     if (e.response.status !== 403) {
       e.response.data.text().then((res: string) => {
-        MsgError(`${t('views.application.tip.ExportError')}:${JSON.parse(res).message}`)
+        MsgError(`${t('views.models.tip.ExportError')}:${JSON.parse(res).message}`)
       })
     }
   })
 }
-const importApplication = (file: any) => {
+
+const importModel = (file: any) => {
   const formData = new FormData()
   formData.append('file', file.raw, file.name)
   elUploadRef.value.clearFiles()
-  applicationApi
-      .importApplication(formData, loading)
+  modelApi
+      .importModel(formData, loading)
       .then(async (res: any) => {
         if (res?.data) {
           searchHandle()
@@ -264,7 +288,7 @@ const importApplication = (file: any) => {
       })
       .catch((e) => {
         if (e.code === 400) {
-          MsgConfirm(t('common.tip'), t('views.application.tip.professionalMessage'), {
+          MsgConfirm(t('common.tip'), t('views.models.tip.professionalMessage'), {
             cancelButtonText: t('common.confirm'),
             confirmButtonText: t('common.professional')
           }).then(() => {
@@ -275,79 +299,29 @@ const importApplication = (file: any) => {
 }
 
 function openCreateDialog() {
-  common
-      .asyncGetValid(ValidType.Application, ValidCount.Application, loading)
-      .then(async (res: any) => {
-        if (res?.data) {
-          CreateApplicationDialogRef.value.open()
-        } else if (res?.code === 400) {
-          MsgConfirm(t('common.tip'), t('views.application.tip.professionalMessage'), {
-            cancelButtonText: t('common.confirm'),
-            confirmButtonText: t('common.professional')
-          }).then(() => {
-            window.open('https://maxkb.cn/pricing.html', '_blank')
-          })
-        }
-      })
+  if (CreateModelDialogRef.value) {
+    CreateModelDialogRef.value.open()
+  }
+}
+
+function viewModelDemo(model: any) {
+  console.log('View model demo:', model)
 }
 
 function searchHandle() {
   if (user.userInfo) {
-    localStorage.setItem(user.userInfo.id + 'application', selectUserId.value)
+    localStorage.setItem(user.userInfo.id + 'model', selectUserId.value)
   }
-  applicationList.value = []
+  modelList.value = []
   paginationConfig.current_page = 1
   paginationConfig.total = 0
   getList()
 }
 
-function mapToUrlParams(map: any[]) {
-  const params = new URLSearchParams()
-
-  map.forEach((item: any) => {
-    params.append(encodeURIComponent(item.name), encodeURIComponent(item.value))
-  })
-
-  return params.toString() // 返回 URL 查询字符串
-}
-
-function getAccessToken(id: string) {
-  applicationList.value
-      .filter((app) => app.id === id)[0]
-      ?.work_flow?.nodes?.filter((v: any) => v.id === 'base-node')
-      .map((v: any) => {
-        apiInputParams.value = v.properties.api_input_field_list
-            ? v.properties.api_input_field_list.map((v: any) => {
-              return {
-                name: v.variable,
-                value: v.default_value
-              }
-            })
-            : v.properties.input_field_list
-                ? v.properties.input_field_list
-                    .filter((v: any) => v.assignment_method === 'api_input')
-                    .map((v: any) => {
-                      return {
-                        name: v.variable,
-                        value: v.default_value
-                      }
-                    })
-                : []
-      })
-
-  const apiParams = mapToUrlParams(apiInputParams.value)
-      ? '?' + mapToUrlParams(apiInputParams.value)
-      : ''
-  application.asyncGetAccessToken(id, loading).then((res: any) => {
-    window.open(application.location + res?.data?.access_token + apiParams)
-  })
-}
-
-function deleteApplication(row: any) {
+function deleteModel(row: any) {
   MsgConfirm(
-      // @ts-ignore
-      `${t('views.application.delete.confirmTitle')}${row.name} ?`,
-      t('views.application.delete.confirmMessage'),
+      `${t('views.models.delete.confirmTitle')}${row.name} ?`,
+      t('views.models.delete.confirmMessage'),
       {
         confirmButtonText: t('common.confirm'),
         cancelButtonText: t('common.cancel'),
@@ -355,9 +329,9 @@ function deleteApplication(row: any) {
       }
   )
       .then(() => {
-        applicationApi.delApplication(row.id, loading).then(() => {
-          const index = applicationList.value.findIndex((v) => v.id === row.id)
-          applicationList.value.splice(index, 1)
+        modelApi.delModel(row.id, loading).then(() => {
+          const index = modelList.value.findIndex((v) => v.id === row.id)
+          modelList.value.splice(index, 1)
           MsgSuccess(t('common.deleteSuccess'))
         })
       })
@@ -371,7 +345,7 @@ function getList() {
     ...(selectUserId.value &&
         selectUserId.value !== 'all' && {select_user_id: selectUserId.value})
   }
-  applicationApi.getApplication(paginationConfig, params, loading).then((res) => {
+  modelApi.getModel(paginationConfig, params, loading).then((res) => {
     res.data.records.forEach((item: any) => {
       if (user.userInfo && item.user_id === user.userInfo.id) {
         item.username = user.userInfo.username
@@ -379,35 +353,91 @@ function getList() {
         item.username = userOptions.value.find((v) => v.value === item.user_id)?.label
       }
     })
-    applicationList.value = [...applicationList.value, ...res.data.records]
+    modelList.value = [...modelList.value, ...res.data.records]
     paginationConfig.total = res.data.total
   })
 }
 
 function getUserList() {
-  applicationApi.getUserList('APPLICATION', loading).then((res) => {
-    if (res.data) {
-      userOptions.value = res.data.map((item: any) => {
-        return {
-          label: item.username,
-          value: item.id
+  // 添加模拟数据用于测试
+  const mockData = [
+    {
+      id: '1',
+      username: 'user1',
+      models: [
+        {
+          id: '1',
+          name: '预测模型1',
+          desc: '这是一个预测模型',
+          model_type: 'forecasting',
+          user_id: '1',
+          username: 'user1',
+          base_model: 'patchtst'
         }
-      })
-      if (user.userInfo) {
-        const selectUserIdValue = localStorage.getItem(user.userInfo.id + 'application')
-        if (selectUserIdValue && userOptions.value.find((v) => v.value === selectUserIdValue)) {
-          selectUserId.value = selectUserIdValue
+      ]
+    },
+    {
+      id: '2',
+      username: 'user2',
+      models: [
+        {
+          id: '2',
+          name: '异常检测模型1',
+          desc: '这是一个异常检测模型',
+          model_type: 'anomaly_detection',
+          user_id: '2',
+          username: 'user2',
+          base_model: 'deepsad'
         }
-      }
-      getList()
+      ]
     }
-  })
+  ]
+
+  // 添加"全部"选项
+  userOptions.value = [
+    { label: t('全部'), value: 'all' },
+    ...mockData.map((item: any) => ({
+      label: item.username,
+      value: item.id
+    }))
+  ]
+
+  // 设置默认选中"全部"
+  if (user.userInfo) {
+    const selectUserIdValue = localStorage.getItem(user.userInfo.id + 'model')
+    if (selectUserIdValue && userOptions.value.find((v) => v.value === selectUserIdValue)) {
+      selectUserId.value = selectUserIdValue
+    } else {
+      selectUserId.value = 'all'
+    }
+  }
+
+  // 使用模拟数据
+  modelList.value = mockData.flatMap(user => user.models)
+  paginationConfig.total = modelList.value.length
+}
+
+function getBaseModelLabel(baseModel: string) {
+  const modelMap: Record<string, string> = {
+    patchtst: 'PatchTST',
+    itransformer: 'iTransformer',
+    moderntcn: 'ModernTCN',
+    lstm: 'LSTM',
+    deepsad: 'DeepAnomaly',
+    usad: 'USAD',
+    dagmm: 'DAGMM',
+    brits: 'BRITS',
+    saits: 'SAITS',
+    transformer: 'Transformer'
+  }
+  return modelMap[baseModel] || baseModel
 }
 
 onMounted(() => {
   getUserList()
 })
 </script>
+
 <style lang="scss" scoped>
 .application-card-add {
   width: 100%;
@@ -443,6 +473,51 @@ onMounted(() => {
     right: 16px;
     top: 15px;
   }
+
+  .footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+    }
+
+    .footer-right {
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+.ml-8 {
+  margin-left: 8px;
+}
+
+.forecasting-tag {
+  background: #ebf1ff !important;
+  color: #3370ff !important;
+  border-color: #d6e2ff !important;
+}
+
+.anomaly-tag {
+  background: #fef0f0 !important;
+  color: #f56c6c !important;
+  border-color: #fde2e2 !important;
+}
+
+.imputation-tag {
+  background: #f0f9eb !important;
+  color: #67c23a !important;
+  border-color: #e1f3d8 !important;
+}
+
+.gold-tag {
+  background: #fdf6ec !important;
+  color: #e6a23c !important;
+  border-color: #faecd8 !important;
 }
 
 .dropdown-custom-switch {

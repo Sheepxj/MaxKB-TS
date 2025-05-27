@@ -6,10 +6,10 @@ export default {
   workflow: '高级编排',
   simple: '简单配置',
   searchBar: {
-    placeholder: '按模型名称搜索'
+    placeholder: '搜索模型名称'
   },
   setting: {
-    demo: '演示'
+    demo: '查看演示'
   },
   delete: {
     confirmTitle: '是否删除应用：',
@@ -212,5 +212,34 @@ export default {
     text: '针对用户提问调试段落匹配情况，保障回答效果。',
     emptyMessage1: '命中段落显示在这里',
     emptyMessage2: '没有命中的分段'
-  }
+  },
+  modelTypes: {
+    forecasting: '时序预测模型',
+    anomalyDetection: '时序异常检测模型',
+    imputation: '时序重建模型'
+  },
+  modelForm: {
+    form: {
+      modelName: {
+        label: '模型名称',
+        placeholder: '请输入模型名称'
+      },
+      modelDescription: {
+        label: '模型描述',
+        placeholder: '请输入模型描述'
+      },
+      modelType: {
+        label: '模型类型',
+        placeholder: '请选择模型类型',
+        forecastingPlaceholder: '用于预测未来时间序列数据',
+        anomalyDetectionPlaceholder: '用于检测时间序列中的异常',
+        imputationPlaceholder: '用于填充时间序列中的缺失值'
+      },
+      baseModel: {
+        label: '基础模型',
+        placeholder: '请选择基础模型'
+      }
+    }
+  },
+  createSuccess: '创建成功'
 }
