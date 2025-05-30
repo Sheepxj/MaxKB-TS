@@ -1,15 +1,19 @@
 <template>
   <div
     class="chat-pc layout-bg"
-    :class="classObj"
+    :class="classObj" 
     v-loading="loading"
     :style="{
       '--el-color-primary': applicationDetail?.custom_theme?.theme_color,
       '--el-color-primary-light-9': hexToRgba(applicationDetail?.custom_theme?.theme_color, 0.1)
     }"
   >
+  <!--块chat-pc__header是聊天界面的标题栏-->
     <div class="chat-pc__header" :style="customStyle">
-      <div class="flex align-center">
+      <div class="flex align-center"
+      @mousemove="handleMouseMove"
+      @mouseleave="handleMouseLeave"
+      >
         <div class="mr-12 ml-24 flex">
           <AppAvatar
             v-if="isAppIcon(applicationDetail?.icon)"
@@ -28,11 +32,28 @@
           />
         </div>
         <h4>{{ applicationDetail?.name }}</h4>
+
+        <div class="flex justify-center align-center relative">  <!-- 添加 relative 定位 -->
+          <span 
+            ref="timeSeriesText" 
+            class="time-series-text"
+            :style="{ 
+              transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))` 
+            }"
+          >
+            TimeSeriesForecasting
+          </span>
+        </div>
+
       </div>
     </div>
+
+    
     <div>
       <div class="flex">
+        <!-- 左侧预测记录 -->
         <div class="chat-pc__left border-r">
+          <!-- 左侧预测记录列表表头 -->
           <div class="p-24 pb-0">
             <el-button class="add-button w-full primary" @click="newChat">
               <el-icon>
@@ -42,6 +63,7 @@
             </el-button>
             <p class="mt-20 mb-8">{{ $t('chat.history') }}</p>
           </div>
+          <!-- 存储预测记录区域，超过高度会自动添加垂直滚动条 -->
           <div class="left-height pt-0">
             <el-scrollbar>
               <div class="p-8 pt-0">
@@ -94,14 +116,17 @@
                 </common-list>
               </div>
               <div v-if="chatLogData?.length" class="gradient-divider lighter mt-8">
-                <span>{{ $t('chat.only20history') }}</span>
+                <span>{{ $t('timeSeries.only20history') }}</span>
               </div>
             </el-scrollbar>
           </div>
         </div>
+        
+        <!--整个右侧区域-->
         <div class="chat-pc__right">
+          <!-- 右侧区域标题栏 -->
           <div class="right-header border-b mb-24 p-16-24 flex-between">
-            <el-row :gutter="20" class="w-full">
+            <el-row :gutter="24" class="w-full">
               <el-col :span="8">
                 <el-upload
                   action="#"
@@ -116,7 +141,7 @@
                 </el-upload>
               </el-col>
               
-              <el-col :span="10">
+              <el-col :span="8">
                 <el-select 
                   v-model="selectedModel"
                   :placeholder="$t('timeSeries.selectModel')"
@@ -132,12 +157,12 @@
                 </el-select>
               </el-col>
               
-              <el-col :span="6">
+              <el-col :span="8" style="display: flex; justify-content: flex-end">
                 <el-button 
                   type="primary" 
                   @click="startPrediction"
-                  :disabled="!selectedModel"
-                >
+                  :disabled="!selectedModel"  
+                >  <!-- 未选择模型时禁用按钮条件 -->
                   <el-icon><VideoPlay /></el-icon>
                   {{ $t('timeSeries.startPrediction') }}
                 </el-button>
@@ -147,9 +172,20 @@
           
           <!-- 时间序列展示区域 -->
           <div class="right-height chart-container">
-            <div ref="chartRef" style="width: 100%; height: 100%"></div>
+            <!-- 原始数据展示区 -->
+            <div class="chart-top" :class="{ 'no-data': !hasData }">
+              <div v-if="!hasData" class="placeholder">无数据</div>
+              <div v-else ref="originalChart"></div>
+            </div>
+
+            <!-- 预测结果展示区 -->
+            <div class="chart-bottom" :class="{ 'no-prediction': !hasPrediction }">
+              <div v-if="!hasPrediction" class="placeholder">无预测输出</div>
+              <div v-else ref="predictionChart"></div>
+            </div>
           </div>
         </div>
+
       </div>
       <div class="collapse">
         <el-button @click="isCollapse = !isCollapse">
@@ -157,6 +193,8 @@
         </el-button>
       </div>
     </div>
+
+    
     <EditTitleDialog ref="EditTitleDialogRef" @refresh="refreshFieldTitle" />
   </div>
 </template>
@@ -178,6 +216,36 @@ const { user, log, common } = useStore()
 const EditTitleDialogRef = ref()
 
 const isCollapse = ref(false)
+
+// 顶上的TimeSeriesForecasting的响应式数据
+const timeSeriesText = ref<HTMLSpanElement | null>(null);
+const offset = ref({ x: 0, y: 0 });
+
+//绘图图表的响应式数据
+const hasData = ref(false)
+const hasPrediction = ref(false)
+
+
+
+// 鼠标移动事件
+const handleMouseMove = (event: MouseEvent) => {
+  if (!timeSeriesText.value) return;
+  
+  const rect = timeSeriesText.value.getBoundingClientRect();
+  const containerRect = event.currentTarget.getBoundingClientRect();
+  
+  const dx = (event.clientX - containerRect.left - rect.width / 2) * 0.2;
+  const dy = (event.clientY - containerRect.top - rect.height / 2) * 0.1;
+  
+  offset.value = { x: dx, y: dy };
+};
+
+// 鼠标离开事件
+const handleMouseLeave = () => {
+  offset.value = { x: 0, y: 0 };
+};
+
+
 
 const customStyle = computed(() => {
   return {
@@ -525,4 +593,57 @@ onMounted(() => {
     margin: 0 auto;
   }
 }
+
+.time-series-text {
+  font-size: 24px; /* 炫酷字体大小 */
+  font-family: 'Arial Black', sans-serif; /* 炫酷字体类型 */
+  color: #333; /* 基础颜色 */
+  opacity: 0.2; /* 透明度50% */
+  position: absolute;  // 改为绝对定位
+  left: 50%;           // 水平居中基准
+  top: 50%;            // 垂直居中基准
+  transform: translate(-50%, -50%); // 初始居中定位
+  pointer-events: none; // 防止鼠标事件被文本元素拦截
+  transition: transform 1.5s ease; /* 平滑移动动画 */
+  margin-left: 8px; /* 与前文间距 */
+}
+
+/* 分割容器样式 */
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chart-top, .chart-bottom {
+  flex: 1;
+  position: relative;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.chart-bottom {
+  border-bottom: none;
+}
+
+/* 提示信息样式 */
+.placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  color: #999;
+}
+
+/* 状态类 */
+.no-data .placeholder,
+.no-prediction .placeholder {
+  display: block;
+}
+
+.no-data > div:not(.placeholder),
+.no-prediction > div:not(.placeholder) {
+  display: none;
+}
+
 </style>
